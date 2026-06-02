@@ -8,8 +8,9 @@ import (
 )
 
 func main() {
-	//handler := newTextHandler()
-	handler := newJSONHandler()
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
 	logger := slog.New(handler)
 
 	// Usage examples
@@ -18,18 +19,6 @@ func main() {
 
 	err2 := trace.Wrap(err, "failed to start server")
 	logger.Error("startup failed", slog.Any("error", err2))
-}
-
-func newTextHandler() slog.Handler {
-	return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
-}
-
-func newJSONHandler() slog.Handler {
-	return slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
 }
 
 func errInFunction() error {
