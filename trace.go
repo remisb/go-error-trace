@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"path"
 	"runtime"
 	"strings"
 )
@@ -64,8 +63,7 @@ func Wrap(err error, msg string) error {
 		return nil
 	}
 	// Avoid double-wrapping with a new stack trace
-	var existing *StackTraceError
-	if errors.As(err, &existing) {
+	if _, ok := errors.AsType[*StackTraceError](err); ok {
 		return fmt.Errorf("%s: %w", msg, err)
 	}
 
@@ -81,8 +79,7 @@ func formatStack(pcs []uintptr) []string {
 
 	for {
 		frame, more := frames.Next()
-		dir := path.Dir(frame.File)
-		if !(filterOutPackageOn && strings.HasSuffix(dir, filterOutPackage)) {
+		if !(filterOutPackageOn && strings.Contains(frame.File, "/"+filterOutPackage+"/")) {
 			trace = append(trace, fmt.Sprintf("%s:%d %s", frame.File, frame.Line, frame.Function))
 		}
 		if !more {
@@ -92,6 +89,8 @@ func formatStack(pcs []uintptr) []string {
 	return trace
 }
 
+// captureStack returns a slice of stack frames.
+// Raw memory addresses pointing to each function call in the call stack.
 func captureStack(skip int, depth int) []uintptr {
 	pcs := make([]uintptr, depth)
 	n := runtime.Callers(skip, pcs)
